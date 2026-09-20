@@ -19,6 +19,7 @@ w4-bigdataprod/
 ├── .gitignore                깃에 올리지 않을 파일 목록 (.env, 데이터, 실행 결과 등)
 │
 ├── week4_practice.ipynb      ★ 메인 실습 노트북
+├── week4_practice_en.ipynb   메인 실습 노트북의 영문판 (코드는 같고 설명·주석·출력 문구만 영어)
 ├── upbit_producer.py         생산자 — 실시간 체결을 받아 장부에 기록
 ├── upbit_consumer.py         소비자 — 장부를 읽어 창(window)마다 집계
 ├── my_consumer.py            ★ 과제 — TODO ①~④를 채우는 미니 소비자
@@ -48,6 +49,8 @@ w4-bigdataprod/
 | PART 1-B · 한 번 읽기 — DB | 3 ~ 8 | parquet → SQLite 적재, `read_sql`로 쿼리 보내기, WHERE / GROUP BY가 돌아오는 양을 정한다, 직접 SQL 날려 보기, **증분(incremental) 수집** |
 | PART 1-C · 반복해서 묻기 — API | 9 ~ 13 | 인증키 읽기와 `fetch` 함수, 응답 검사(HTTP 200이어도 에러일 수 있다), `json_normalize`, 여러 페이지 받기(끝은 서버의 `totalCount`에게 묻는다), 간단한 집계 |
 | PART 3 · 끝없이 받기 — 스트림 | 14 ~ 20 | 업비트 WebSocket 첫 메시지 구조, 생산자 → 큐 → 소비자, 장부에 덧붙이기, 소비자 그룹별 위치(`seek` / `tell`), 창(window) 집계, 정리 |
+
+영문판은 `week4_practice_en.ipynb`입니다. 셀 구성과 코드는 한글판과 같고, 설명 · 주석 · `print` 문구만 영어입니다. 두 노트북은 같은 `data/`, `raw/`, `state/`를 쓰므로 하나만 골라서 실행하세요.
 
 ### `upbit_producer.py` — 생산자
 

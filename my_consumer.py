@@ -79,7 +79,7 @@ def run():
                 .sort_values("amount", ascending=False).to_string())
 
     # TODO ④ 처리가 끝난 '후'에 위치(pos)를 POS_FILE 에 적는다 — 한 줄
-    # (힌트: POS_FILE.write_text(...) 는 문자열만 받는다)
+    # (힌트: POS_FILE.w__________(...) 는 문자열만 받는다)
 
 
 if __name__ == "__main__":
