@@ -59,6 +59,33 @@ python upbit_producer.py                   # 기본 5종목 (BTC, ETH, XRP, SOL,
 python upbit_producer.py KRW-BTC KRW-ETH   # 종목 지정
 ```
 
+**장부(ledger)란?** 받은 체결 메시지를 도착한 순서대로 쌓아 두는 파일 `raw/upbit_trades.jsonl`을 이 실습에서 장부라고 부릅니다.
+가게의 거래 장부처럼 **덧붙이기만 하고(append-only), 이미 적은 줄은 고치지도 지우지도 않습니다.**
+생산자는 쓰기만, 소비자는 읽기만 하므로 둘은 서로를 모른 채 이 파일 하나로만 이어집니다.
+한 번 적힌 줄의 위치(바이트)가 변하지 않기 때문에, 소비자는 "몇 바이트까지 읽었다"만 기억하면 이어서 읽을 수 있고 여러 소비자가 각자 속도로 같은 장부를 읽을 수 있습니다.
+(Kafka 같은 메시지 큐의 로그(log)와 같은 생각입니다. 거기서는 읽은 위치를 offset이라고 부릅니다.)
+
+**장부 한 줄의 속성** — 업비트 체결 메시지 하나입니다. ★는 실습 코드에서 실제로 쓰는 속성입니다.
+
+| 속성 | 뜻 | 예 |
+|---|---|---|
+| ★ `code` | 종목 코드. `KRW-BTC` = 원화로 거래하는 비트코인 | `"KRW-BTC"` |
+| ★ `trade_price` | 체결 가격(원), 코인 1개당 | `109649000.0` |
+| ★ `trade_volume` | 체결량(코인 개수). 체결 금액 = `trade_price` × `trade_volume` | `0.0009` |
+| ★ `ask_bid` | `ASK` = 매도 체결, `BID` = 매수 체결 | `"BID"` |
+| ★ `trade_timestamp` | 체결이 일어난 시각(밀리초 단위 유닉스 시간). 창(window)을 나누는 기준 | `1789874437574` |
+| ★ `sequential_id` | 체결 고유번호. 중복 제거에 쓴다 | `17898744375740000` |
+| `type` | 메시지 종류. 체결은 항상 `trade` | `"trade"` |
+| `timestamp` | 서버가 메시지를 보낸 시각(ms) | `1789874437622` |
+| `trade_date` · `trade_time` | 체결 일자 · 시각. **UTC 기준** (한국 시간 = UTC + 9시간) | `"2026-09-20"` · `"03:20:37"` |
+| `prev_closing_price` | 전일 종가 | `110917000.0` |
+| `change` · `change_price` | 전일 종가 대비 `RISE` / `EVEN` / `FALL` · 그 차이(절댓값) | `"FALL"` · `1268000.0` |
+| `best_ask_price` · `best_ask_size` | 체결 시점의 최우선 매도 호가 · 잔량 | `109649000` · `0.02228361` |
+| `best_bid_price` · `best_bid_size` | 체결 시점의 최우선 매수 호가 · 잔량 | `109602000` · `0.88702525` |
+| `stream_type` | `SNAPSHOT` = 연결 직후의 최근 값, `REALTIME` = 실시간. 이 코드는 `REALTIME`만 받는다 | `"REALTIME"` |
+
+같은 설명이 `upbit_producer.py` 파일 맨 위에도 들어 있습니다.
+
 ### `upbit_consumer.py` — 소비자 (완성본, 참고용)
 
 장부를 **자기 위치부터** 끝없이 읽고, 창(window)마다 종목별 체결수 · 거래량 · VWAP · 마지막가를 집계합니다.
