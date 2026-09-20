@@ -120,11 +120,11 @@ pip install -r requirements.txt
 curl -O https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2023-01.parquet
 
 # 3. API 인증키 — 코드에 쓰지 않는다
-cp .env.example .env        # .env 를 열어 DATA_GO_KR_KEY= 뒤에 자기 키를 넣는다
+cp .env.example .env        # .env 를 열어 DATA_GO_KR_KEY= 뒤에 자기 키를 넣는다. 수업시간에 제공
 ```
 
 노트북을 VS Code 또는 Jupyter에서 열고 `.venv` 커널로 **위에서부터 순서대로** 실행합니다.
-인증키는 환경변수 `DATA_GO_KR_KEY` → 없으면 `.env` 파일 순서로 읽습니다. 둘 다 없으면 셀 9가 멈춥니다.
+인증키는 환경변수 `DATA_GO_KR_KEY` → 없으면 `.env` 파일 순서로 읽습니다. 
 키 발급: 공공데이터포털(data.go.kr)에서 '국토교통부_수단통행량' 활용 신청.
 
 > 모든 명령은 **이 폴더에서** 실행합니다. 코드가 `raw/`, `state/`, `data/`를 상대 경로로 씁니다.
