@@ -72,6 +72,46 @@ python upbit_consumer.py B 60     # 그룹 B, 60초 창
 - 같은 `sequential_id`는 한 번만 센다 (처리 후 기록이라 두 번 읽힐 수 있으므로)
 - 닫힌 창의 집계 결과는 `raw/upbit_windows_<그룹>.jsonl`에 덧붙인다
 
+### 잠깐 — JSONL이 뭔가요? (JSON과 다른 점)
+
+생산자와 소비자가 주고받는 장부(`upbit_trades.jsonl`)와 창 집계 결과(`upbit_windows_<그룹>.jsonl`)는 모두 **JSONL**(JSON Lines) 형식입니다.
+규칙은 하나뿐입니다. **한 줄에 JSON 하나**, 줄과 줄 사이는 줄바꿈(`\n`)으로 구분합니다.
+
+```
+{"code": "KRW-BTC", "trade_price": 158200000.0, "trade_volume": 0.0021, "ask_bid": "BID"}
+{"code": "KRW-ETH", "trade_price": 5921000.0, "trade_volume": 0.15, "ask_bid": "ASK"}
+{"code": "KRW-XRP", "trade_price": 4105.0, "trade_volume": 1200.0, "ask_bid": "BID"}
+```
+
+같은 내용을 보통의 JSON 파일로 저장하면 전체를 대괄호로 감싼 **하나의 배열**이 됩니다.
+
+```json
+[
+  {"code": "KRW-BTC", "trade_price": 158200000.0, "trade_volume": 0.0021, "ask_bid": "BID"},
+  {"code": "KRW-ETH", "trade_price": 5921000.0, "trade_volume": 0.15, "ask_bid": "ASK"},
+  {"code": "KRW-XRP", "trade_price": 4105.0, "trade_volume": 1200.0, "ask_bid": "BID"}
+]
+```
+
+| | JSON (`.json`) | JSONL (`.jsonl`) |
+|---|---|---|
+| 파일 전체 | 값 **하나** (보통 큰 배열이나 객체) | 독립된 JSON이 **줄마다 하나씩** |
+| 새 데이터 추가 | 맨 끝의 `]` 앞에 끼워 넣어야 함 → 사실상 파일을 다시 써야 한다 | 파일 끝에 한 줄 덧붙이면 끝 (`open("a")`) |
+| 읽기 | 끝까지 다 읽어야 파싱된다 (`json.load`) | 한 줄씩 읽으며 바로 처리 (`readline` → `json.loads`) |
+| 쓰는 도중 끊기면 | 닫는 괄호가 없어 **파일 전체**를 못 읽는다 | 마지막 한 줄만 버리면 되고 나머지는 멀쩡하다 |
+| 이어서 읽기 | 중간 위치에서 시작할 수 없다 | 줄 경계의 바이트 위치만 기억하면 거기서부터 (`seek`) |
+| 사람이 보기 | 들여쓰기로 예쁘게 볼 수 있다 | 한 줄이 길어 보기 불편 (대신 `head`, `tail -f`, `wc -l`이 통한다) |
+| 어울리는 곳 | 설정 파일, API 응답 한 건 | 로그, 이벤트 스트림, 끝없이 쌓이는 데이터 |
+
+이 실습이 JSONL을 쓰는 이유가 바로 위 표에 있습니다.
+
+- **생산자**는 체결이 올 때마다 `f.write(json.dumps(m) + "\n")` 한 줄만 덧붙입니다. 파일이 아무리 커져도 기존 내용은 건드리지 않습니다.
+- **소비자**는 `f.seek(pos)`로 지난번 위치로 점프해 새로 쌓인 줄만 읽습니다. 끝없이 자라는 파일이라 "다 읽고 파싱"은 애초에 불가능합니다.
+- 소비자 코드의 `if not line.endswith(b"\n")`는 **생산자가 아직 쓰는 중인 반쪽 줄**을 걸러 내는 검사입니다. 줄바꿈이 있어야 완성된 한 줄입니다.
+
+주의할 점: JSONL 파일 전체는 올바른 JSON이 **아닙니다**. `json.load(f)`로 통째로 읽으면 에러가 납니다. 한 줄씩 `json.loads(line)`으로 읽거나, pandas라면 `pd.read_json("파일.jsonl", lines=True)`를 씁니다.
+한 줄 안에는 줄바꿈이 들어갈 수 없으므로 `json.dumps`에 `indent`를 주면 안 됩니다. (API 응답 한 건을 저장하는 `raw/api/*.json`은 추가할 일이 없는 데이터라 보통의 JSON에 `indent=2`로 저장합니다.)
+
 ### `my_consumer.py` — 과제: 나만의 미니 소비자
 
 `upbit_consumer.py`의 핵심만 남긴 뼈대입니다. 지금도 실행은 되지만, 실행할 때마다 장부를 **처음부터 · 전부** 다시 읽고 고르지 않은 채 그대로 보여 줍니다.
