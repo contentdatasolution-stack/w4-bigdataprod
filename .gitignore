@@ -1,0 +1,22 @@
+# 인증키 — 절대 올리지 않는다
+.env
+
+# 원본 데이터 (README의 curl 명령으로 받는다, 45 MB)
+*.parquet
+
+# 실행하면 생기는 폴더
+data/
+raw/
+state/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# OS / 에디터
+.DS_Store
+.vscode/
+.idea/

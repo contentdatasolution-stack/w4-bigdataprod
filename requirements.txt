@@ -1,0 +1,6 @@
+pandas
+pyarrow
+requests
+websocket-client
+certifi
+ipykernel
